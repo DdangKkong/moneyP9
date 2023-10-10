@@ -1,5 +1,6 @@
 package com.dayone.service;
 
+import com.dayone.exception.impl.NoCompanyException;
 import com.dayone.model.Company;
 import com.dayone.model.ScrapedResult;
 import com.dayone.persist.CompanyRepository;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -77,6 +79,17 @@ public class CompanyService {
 
     public void deleteAutocompleteKeyword(String keyword) {
         this.trie.remove(keyword);
+    }
+
+    public String deleteCompany(String ticker) {
+        var company = this.companyRepository.findByTicker(ticker)
+                .orElseThrow(() -> new NoCompanyException());
+
+        this.dividendRepository.deleteAllByCompanyId(company.getId());
+        this.companyRepository.delete(company);
+
+        this.deleteAutocompleteKeyword(company.getName());
+        return company.getName();
     }
 
 }
